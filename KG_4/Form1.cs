@@ -94,88 +94,78 @@ namespace KG_4
 
         private void CerusBeck()
         {
-            PointF P0 = new Point(5, -1);
-            PointF P1 = new Point(7, 2);
+            PointF P0 = new Point(1, 1);
+            PointF P1 = new Point(8, 8);
             PointF vec = new PointF(P1.X- P0.X, P1.Y- P0.Y);
             g.DrawLine(pen,Convert(P0),Convert(P1));
             PointF D = minus(P1, P0);
             List<PointF> points = new List<PointF>();
             points.Add(new PointF(2, 0));
-            points.Add(new PointF(4, 0));
-            points.Add(new PointF(6, 2));
-            points.Add(new PointF(6, 4));
-            points.Add(new PointF(4, 6));
-            points.Add(new PointF(2, 6));
-            points.Add(new PointF(0, 4));
             points.Add(new PointF(0, 2));
-            List<float> t_H = new List<float>();
-            List<float> t_H2 = new List<float>();
-            List<float> t_L = new List<float>();
-            List<float> t_L2 = new List<float>();
+            points.Add(new PointF(0, 4));
+            points.Add(new PointF(2, 6));
+            points.Add(new PointF(4, 6));
+            points.Add(new PointF(6, 4));
+            points.Add(new PointF(6, 2));
+            points.Add(new PointF(4, 0));
+
+            List<float> t_all = new List<float>();
             List<PointF> normal = new List<PointF>();
+            bool flag = true;
             for (int i = 0; i < points.Count; i++)
             {
-                normal.Add(new PointF(-1 * (points[(i + 1) % points.Count].Y - points[i].Y), points[(i + 1) % points.Count].X - points[i].X));
+                normal.Add(new PointF((points[(i + 1) % points.Count].Y - points[i].Y), -1*(points[(i + 1) % points.Count].X - points[i].X)));
             }
-            for (int i = 0; i < normal.Count; i++)
+            float t0 = 0, t1 = 1;
+            for (int i = 0;i < normal.Count; i++)
             {
-                //if (scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) <= 1 && scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) >= 0)
-                //{
-                if (scalar(D, normal[i]) < 0)
+                float tmp;
+                PointF w = (minus(P0, points[i]));
+                if (scalar(D, normal[i]) != 0)
                 {
-                    t_H.Add(scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D));
-                    if (scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) >= 0 && scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) <= 1&&scalar(normal[i], vec) != 0)
+                    tmp = (-(scalar(w, normal[i]) / scalar(D, normal[i])));
+                    if (scalar(D, normal[i]) > 0)
                     {
-                        t_H2.Add(scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D));
+                        if (tmp <= 1)
+                        {
+                            t0 = Math.Max(t0, tmp);
+                        }
+                    }
+                    else
+                    {
+                        if (tmp >= 0)
+                        {
+                            t1 = Math.Min(t1, tmp);
+                        }
+                    }
+                    t_all.Add(tmp);
+                }
+                else
+                {
+                    if (scalar(w, normal[i]) < 0)
+                    {
+                        flag = false;
                     }
                 }
-                if (scalar(D, normal[i]) >= 0)
-                {
-                    t_L.Add(scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D));
-                    if (scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) >= 0 && scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) <= 1 && scalar(normal[i],vec)!=0)
-                    {
-                        t_L2.Add(scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D));
-                    }
-                    //}
-                }
             }
-            float t_Lower, t_Higher;
-            PointF P_t2, P_t;
-            if (t_L2.Count == 0)
+            PointF P_t0, P_t1;
+            if (t0 <= t1 && flag == true)
             {
-                P_t = new PointF(P0.X, P0.Y);
-            }
-            else
-            {
-                t_Lower = t_L2.Max();
-                P_t = plus(P0, new PointF(t_Lower * D.X, t_Lower * D.Y));
-            }
-            if (t_H2.Count == 0)
-            {
-                P_t2 = new PointF(P1.X, P1.Y);
-            }
-            else
-            {
-                t_Higher = t_H2.Min();
-                P_t2 = plus(P0, new PointF(t_Higher * D.X, t_Higher * D.Y));
-
+                P_t0 = plus(P0, new PointF(t0 * D.X, t0 * D.Y));
+                P_t1 = plus(P0, new PointF(t1 * D.X, t1 * D.Y));
+                g.DrawLine(linePen2, Convert(P_t0), Convert(P_t1));
             }
             for (int i = 0; i < points.Count; i++)
             {
                 g.DrawLine(linePen, Convert(points[i]), Convert(points[(i + 1) % points.Count]));
             }
 
-            g.DrawLine(linePen2, Convert(P_t), Convert(P_t2));
-            for (int i = 0; i < t_L.Count; i++)
+            for (int i = 0; i < t_all.Count; i++)
             {
-                PointF tmp = Convert(plus(P0, new PointF(t_L[i] * D.X, t_L[i] * D.Y)));
+                PointF tmp = Convert(plus(P0, new PointF(t_all[i] * D.X, t_all[i] * D.Y)));
                 g.DrawEllipse(linePen2, tmp.X, tmp.Y, 10, 10);
             }
-            for (int i = 0; i < t_H.Count; i++)
-            {
-                PointF tmp = Convert(plus(P0, new PointF(t_H[i] * D.X, t_H[i] * D.Y)));
-                g.DrawEllipse(linePen2, tmp.X, tmp.Y, 10, 10);
-            }
+
         }
 
         float scalar(PointF a, PointF b)
@@ -192,3 +182,28 @@ namespace KG_4
         }
     }
 }
+
+
+
+//for (int i = 0; i < normal.Count; i++)
+//{
+//    //if (scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) <= 1 && scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) >= 0)
+//    //{
+//    if (scalar(D, normal[i]) < 0)
+//    {
+//        t_H.Add(scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D));
+//        if (scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) >= 0 && scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) <= 1 && scalar(normal[i], vec) != 0)
+//        {
+//            t_H2.Add(scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D));
+//        }
+//    }
+//    if (scalar(D, normal[i]) > 0)
+//    {
+//        t_L.Add(scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D));
+//        if (scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) >= 0 && scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D) <= 1 && scalar(normal[i], vec) != 0)
+//        {
+//            t_L2.Add(scalar(normal[i], minus(points[i], P0)) / scalar(normal[i], D));
+//        }
+
+//        //}
+//    }
